@@ -1063,6 +1063,14 @@
   #root.narrow .pay-parts { grid-template-columns: 1fr; }
   #root.narrow .pay-table th, #root.narrow .pay-table td { padding: 10px 10px; font-size: 15px; }
   #root.narrow .money-callout .mc-amount { font-size: 72px; }
+  .sl-foot { flex: 0 0 auto; display: flex; justify-content: center; flex-wrap: wrap; gap: 0 28px; padding: 6px 16px 18px; background: var(--off-white); }
+  .sl-foot .sl-donate { padding: 6px 4px; }
+  #root.wide .sl-foot { grid-column: 2; grid-row: 2; }
+  #root.narrow .sl-foot { gap: 0 14px; padding: 2px 6px 10px; }
+  #root.narrow .sl-foot .sl-donate { font-size: 15px; padding: 4px 2px; }
+  #root.narrow .sl-hero-copy { padding-bottom: 22px; }
+  .foot-lead { font-style: normal; }
+  #root.narrow .foot-lead { display: none; }
   .rec-ver { font-family: var(--body); font-size: 13px; color: #999; text-align: center; margin-top: 16px; }
   .rec-conn { font-family: var(--body); font-size: 14px; color: #666; margin-bottom: 12px; }
   #staff-detail .sd-records { border-color: var(--pink); color: var(--pink); }
@@ -1093,7 +1101,7 @@
   #root.narrow .sl-hero-h1 { font-size: 60px; margin-bottom: 12px; }
   #root.narrow .sl-eyebrow { margin-bottom: 12px; }
   #root.narrow .sl-hero-p { margin-bottom: 20px; }
-  #root.narrow .tiles.sl4 { grid-template-rows: repeat(2, minmax(140px, 1fr)); }
+  #root.narrow .tiles.sl4 { grid-template-rows: repeat(2, minmax(124px, 1fr)); }
   #root.narrow .tiles.sl4 .tile.num .num-sub { font-size: 15px; margin-top: 8px; }
   #root.narrow .tiles.sl4 .tile.num .num-hero { font-size: 76px; }
   /* Landscape: photo on the left, the four tiles on the right */
@@ -1156,7 +1164,10 @@
     </div>
 
     <!-- Subtle donate line -->
-    <button class="sl-donate" onclick="openGive()">Can't host right now? You can still help. <span>Make a donation</span></button>
+    <div class="sl-foot">
+      <button class="sl-donate" onclick="openFosteringGuide()"><i class="foot-lead">Thinking about fostering? </i><span>Get the fostering guide</span></button>
+      <button class="sl-donate" onclick="openGive()"><i class="foot-lead">Can't host right now? </i><span>Make a donation</span></button>
+    </div>
 
   </div><!-- /home -->
 
@@ -1339,7 +1350,14 @@
         <div class="enquiry" id="enq-sl">
           <div id="enq-sl-form">
             <h3>Get the free guide</h3>
-            <div class="eq-line">Just curious? Pop your details in and we'll email you our Supported Lodgings guide to read at home. No pressure, no salesperson, and it doesn't sign you up to anything.</div>
+            <div class="eq-line">Just curious? Pop your details in and we'll email you a guide to read at home. No pressure, no salesperson, and it doesn't sign you up to anything.</div>
+            <div class="eq-field"><label>Which guide would you like?</label>
+              <div class="chip-row" data-chip="guide">
+                <button class="chip selected" data-val="sl" onclick="pickChip(this)">Supported Lodgings</button>
+                <button class="chip" data-val="fostering" onclick="pickChip(this)">Fostering</button>
+                <button class="chip" data-val="both" onclick="pickChip(this)">Both</button>
+              </div>
+            </div>
             <div class="eq-field"><label for="enq-sl-name">Full name</label><input type="text" id="enq-sl-name" placeholder="Your full name" autocomplete="off" autocorrect="off" spellcheck="false"></div>
             <div class="eq-field"><label for="enq-sl-email">Email address</label><input type="email" id="enq-sl-email" placeholder="your@email.com" autocomplete="off" autocorrect="off" spellcheck="false"></div>
             <div class="optin-row checked" id="enq-sl-optin" onclick="toggleOptin(this)">
@@ -1355,7 +1373,7 @@
           <div class="eq-confirm" id="enq-sl-confirm">
             <div class="ec-splash"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></div>
             <h3>On its way!</h3>
-            <p>The guide is on its way to your inbox, so you can take your time. Thanks for stopping by.</p>
+            <p id="enq-sl-confirm-text">The guide is on its way to your inbox, so you can take your time. Thanks for stopping by.</p>
           </div>
         </div>
         <div class="enquiry" id="enq-sl-offline" style="display:none">
@@ -1949,6 +1967,8 @@ async function drainQueue(manual) {
   if (held && !sendable.length) lastDrainMsg = held + ' held — that form isn’t connected yet.';
   draining = false;
   updateStaffBadge();
+  // Anything queued while we were sending (e.g. "Both" guides) goes straight after.
+  if (navigator.onLine && loadQueue().some(e => { const f = CONFIG.ac.forms[e.dest || 'kiosk']; return f && f.ready; })) setTimeout(() => drainQueue(), 300);
   if (manual) flashStaffDetail();
 }
 
@@ -1999,7 +2019,7 @@ async function codeOk(code, which) {
   const want = which === 'admin' ? CONFIG.event.adminCodeHash : CONFIG.event.staffCodeHash;
   try { return (await hashCode(code.trim())) === want; } catch (e) { return false; }
 }
-const PAGE_VERSION = 'Version 74 · 6 Nov 2026';   // bump with sw.js CACHE_VERSION so staff can check a device is up to date
+const PAGE_VERSION = 'Version 75 · 6 Nov 2026';   // bump with sw.js CACHE_VERSION so staff can check a device is up to date
 function openRecords() {
   hideStaffDetail();
   document.getElementById('rec-ver').textContent = PAGE_VERSION;
@@ -2049,13 +2069,13 @@ function renderRecords() {
   const log = q ? all.filter(e => [e.fullname, e.email, e.phone, e.postcode].some(v => String(v || '').toLowerCase().includes(q))) : all;
   const unsent = new Set(loadQueue().map(e => e.id));
   const signups = all.filter(e => e.dest === 'slsignup').length;
-  const guides = all.filter(e => e.source === 'SL Guide').length;
+  const guides = all.filter(e => e.source === 'SL Guide' || e.source === 'Fostering Guide').length;
   const notSent = all.filter(e => unsent.has(e.id)).length;
   document.getElementById('rec-sum').innerHTML =
     `<div><b>${signups}</b> host sign-up${signups === 1 ? '' : 's'}</div><div><b>${guides}</b> guide request${guides === 1 ? '' : 's'}</div><div class="${notSent ? 'warn' : ''}"><b>${notSent}</b> not yet in ActiveCampaign</div>`;
   document.getElementById('rec-list').innerHTML = log.length ? log.map(e => {
     const st = entryStatus(e, unsent);
-    const type = e.dest === 'slsignup' ? 'Host sign-up' : (e.source === 'SL Guide' ? 'Guide request' : (e.interestType || e.source || 'Entry'));
+    const type = e.dest === 'slsignup' ? 'Host sign-up' : (e.source === 'SL Guide' ? 'SL guide request' : e.source === 'Fostering Guide' ? 'Fostering guide request' : (e.interestType || e.source || 'Entry'));
     const extra = [e.phone, e.postcode, e.room && ('Spare room: ' + e.room), e.calltime && ('Call: ' + e.calltime)].filter(Boolean).map(esc).join(' · ');
     return `<div class="rec-row">
       <div class="rr-name">${esc(e.fullname)}${extra ? `<div class="rr-extra">${extra}</div>` : ''}</div>
@@ -2342,11 +2362,28 @@ function submitEnquiry(key) {
   if (!emailOk) { fieldError('enq-' + key + '-email', 'Please enter a valid email'); valid = false; }
   if (!valid) { resetIdleTimer(); return; }
   const optin = document.getElementById('enq-' + key + '-optin').classList.contains('checked');
-  const stored = queueEntry({
-    fullname: name, email, source: enquirySource(key), optin,
-    dest: key === 'donate' ? 'kiosk' : 'fandl',                      // fostering + SL → F&L form; donate → kiosk
-    interestType: key === 'donate' ? 'Kiosk - Fundraising Enquiry' : ''
+  // Which guide(s): SL, Fostering or both. Each guide is its own entry with the
+  // exact Source its F&L automation matches on ("SL Guide" / "Fostering Guide").
+  let sources = [enquirySource(key)];
+  if (key === 'sl') {
+    const g = guideChoice();
+    sources = g === 'both' ? ['SL Guide', 'Fostering Guide'] : (g === 'fostering' ? ['Fostering Guide'] : ['SL Guide']);
+  }
+  let stored = true;
+  sources.forEach(src => {
+    stored = queueEntry({
+      fullname: name, email, source: src, optin,
+      dest: key === 'donate' ? 'kiosk' : 'fandl',                      // fostering + SL → F&L form; donate → kiosk
+      interestType: key === 'donate' ? 'Kiosk - Fundraising Enquiry' : ''
+    }) && stored;
   });
+  if (key === 'sl') {
+    const g = guideChoice();
+    document.getElementById('enq-sl-confirm-text').textContent = g === 'both'
+      ? 'Both guides are on their way to your inbox, so you can take your time. Thanks for stopping by.'
+      : (g === 'fostering' ? 'The fostering guide is on its way to your inbox, so you can take your time. Thanks for stopping by.'
+                           : 'The Supported Lodgings guide is on its way to your inbox, so you can take your time. Thanks for stopping by.');
+  }
   if (!stored) {
     document.querySelector('#enq-' + key + '-form .eq-line').textContent =
       "Sorry — we couldn't save that just now. Please let a member of the team know.";
@@ -2402,6 +2439,9 @@ function resetSignup() {
   document.getElementById('su-optin').classList.add('checked');
   document.getElementById('enq-signup-confirm').classList.remove('show');
 }
+function guideChoice() { const s = document.querySelector('.chip-row[data-chip="guide"] .chip.selected'); return s ? s.dataset.val : 'sl'; }
+function setGuideChoice(val) { document.querySelectorAll('.chip-row[data-chip="guide"] .chip').forEach(c => c.classList.toggle('selected', c.dataset.val === val)); }
+function openFosteringGuide() { openEnquiry(); setGuideChoice('fostering'); }
 function resetEnquiry(key) {
   const form = document.getElementById('enq-' + key + '-form');
   if (!form) return;
@@ -2411,6 +2451,7 @@ function resetEnquiry(key) {
   if (e) { e.value = ''; e.style.borderColor = ''; }
   const o = document.getElementById('enq-' + key + '-optin'); if (o) o.classList.add('checked');
   const c = document.getElementById('enq-' + key + '-confirm'); if (c) c.classList.remove('show');
+  if (key === 'sl') setGuideChoice('sl');
 }
 
 /* ═══════════════ ALLOWANCE CALCULATOR (fostering) ═══════════════ */
