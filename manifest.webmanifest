@@ -1,0 +1,13 @@
+{
+  "name": "Step by Step Supported Lodgings",
+  "short_name": "SbS Lodgings",
+  "description": "Step by Step Supported Lodgings: find out about hosting, get the guide or sign up.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "background_color": "#412774",
+  "theme_color": "#412774",
+  "icons": [
+    { "src": "./project/assets/logo-secondary-white.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
