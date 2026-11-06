@@ -6,7 +6,7 @@
    Bump CACHE_VERSION (and PAGE_VERSION in index.html) whenever anything
    changes, so devices pick up the new copy.
    ───────────────────────────────────────────────────────────── */
-const CACHE_VERSION = 'sbs-lodgings-v75';
+const CACHE_VERSION = 'sbs-lodgings-v76';
 
 const PRECACHE = [
   './',
