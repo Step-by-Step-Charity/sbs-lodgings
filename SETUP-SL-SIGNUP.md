@@ -7,8 +7,8 @@ The page has two forms. They do different jobs and go to different places.
 
 | Form | What the visitor gets | Where it goes | Status |
 |---|---|---|---|
-| **Get the free guide** | The SL guide by email | Fostering & Lodgings form (f=3), Source `SL Guide`, which fires the existing guide automation | **Live** |
-| **Sign up to host** | A call from the SL team | Its own form (`slsignup` in CONFIG), Source `SL Call Requested / Fostering Call Requested / F&L Not Sure Call Requested` | **Held on the device until connected** |
+| **Get the free guide** | The SL and/or fostering guide by email | Form 3, **F&L – Guide requests (kiosks)**, Source `SL Guide` / `Fostering Guide`, picked up by AC automation A1 | **Live** |
+| **Sign up** (call request) | A call back (they choose Supported Lodgings, Fostering or Not sure yet) | Form 8, **F&L – Call requests (kiosks)** (`slsignup` in CONFIG); Source `SL Call Requested` / `Fostering Call Requested` / `F&L Not Sure Call Requested`; form emails results to marketing@ | **Live from 6 Nov 2026 (Version 79)** |
 
 Until the sign-up form is connected, every sign-up is saved on the tablet or phone it was taken on. Nothing is lost, but nothing reaches ActiveCampaign either. The staff panel shows how many sign-ups are being held. **Export the CSV before you leave each event.**
 
