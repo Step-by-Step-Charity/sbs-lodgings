@@ -19,7 +19,7 @@ Until the sign-up form is connected, every sign-up is saved on the tablet or pho
 Use whichever of these fits:
 
 - **Option A: reuse the website's sign-up form** (if it's an ActiveCampaign form). The kiosk sign-ups then land in the same place as website sign-ups, and the same automation picks them up.
-- **Option B: make a new form called "SL Call Requested / Fostering Call Requested / F&L Not Sure Call Requested".** Choose this if you want kiosk sign-ups reported separately.
+- **Option B: make a new form called "SL kiosk – Host sign-up".** Choose this if you want kiosk sign-ups reported separately.
 
 The form needs these fields:
 
@@ -57,7 +57,12 @@ slsignup: {
 
 ## Step 4. Automation
 
-In ActiveCampaign, add an automation that starts when someone **submits** the form (or, on the shared form, when Source is `SL Call Requested / Fostering Call Requested / F&L Not Sure Call Requested`). It should:
+Sign-ups go through the existing **A1 – F&L Routing Automations** in ActiveCampaign, using its call-request branches. The kiosk sets Kiosk Source to "SL Call Requested", "Fostering Call Requested" or "F&L Not Sure Call Requested" (from "What are you interested in?"). In A1:
+- add a start trigger for each: "Contact's field Kiosk Source changes to …"
+- point the three call-request conditions at **Kiosk Source** (they currently reference a deleted field)
+- add a **notification email** to the right team in each call branch, so someone calls them back
+
+Full details are in the ClickUp doc "ActiveCampaign: Set-up and Reference".
 
 - notify the SL team or create a task to call the person back
 - add a tag such as `SL – Kiosk sign-up` so you can report on it
