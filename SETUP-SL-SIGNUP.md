@@ -26,7 +26,7 @@ The form needs these fields:
 - Full name
 - Email
 - **Phone**. Use a custom **text** field rather than ActiveCampaign's built-in Phone field. The built-in field rejected kiosk entries before, because of its validation.
-- Postcode (custom text field)
+- Town and County (custom text fields: F&L Town = field 45, F&L County = field 48)
 - Spare room? (custom text field; the kiosk sends `Yes` / `Not yet` / `Not sure`)
 - Best time to call (custom text field; the kiosk sends `Morning` / `Afternoon` / `Evening` / `Any time`)
 - Source, Date, Time and Opt-in. These are the same custom fields the F&L form already uses: field 30, 31, 32 and 33.

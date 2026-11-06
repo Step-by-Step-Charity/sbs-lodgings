@@ -841,6 +841,8 @@
   .enquiry .eq-line { font-family: var(--body); font-size: 19px; color: #555; line-height: 1.5; margin-bottom: 26px; }
   .eq-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
   .eq-field label { font-family: var(--body); font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--purple); }
+  .eq-select { height: 82px; border: 3px solid rgba(65,39,116,0.2); border-radius: 14px; padding: 0 18px; font-family: var(--body); font-size: 22px; color: var(--charcoal); background: #fff; outline: none; width: 100%; }
+  .eq-select:focus { border-color: var(--pink); }
   .eq-field input { height: 82px; border: 3px solid rgba(65,39,116,0.2); border-radius: 14px; padding: 0 22px; font-family: var(--body); font-size: 22px; color: var(--charcoal); background: #fff; outline: none; -webkit-appearance: none; transition: border-color 0.2s; }
   .eq-field input:focus { border-color: var(--pink); }
   .enquiry .optin-row { margin: 6px 0 24px; }
@@ -1393,7 +1395,20 @@
               <div class="eq-field"><label for="su-name">Full name</label><input type="text" id="su-name" placeholder="Your full name" autocomplete="off" autocorrect="off" spellcheck="false"></div>
               <div class="eq-field"><label for="su-email">Email address</label><input type="email" id="su-email" placeholder="your@email.com" autocomplete="off" autocorrect="off" spellcheck="false"></div>
               <div class="eq-field"><label for="su-phone">Phone number</label><input type="tel" id="su-phone" placeholder="So we can call you" autocomplete="off"></div>
-              <div class="eq-field"><label for="su-postcode">Postcode</label><input type="text" id="su-postcode" placeholder="e.g. GU11 1UD" autocomplete="off" autocorrect="off" spellcheck="false" style="text-transform:uppercase"></div>
+              <div class="eq-field"><label for="su-town">Town</label><input type="text" id="su-town" placeholder="e.g. Basingstoke" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+              <div class="eq-field"><label for="su-county">County</label>
+                <select id="su-county" class="eq-select" onchange="resetIdleTimer()">
+                  <option value="">Choose…</option>
+                  <option>Hampshire</option>
+                  <option>Surrey</option>
+                  <option>Dorset</option>
+                  <option>Wiltshire</option>
+                  <option>West Berkshire</option>
+                  <option>West Sussex</option>
+                  <option>Area bordering one of these</option>
+                  <option>Other area</option>
+                </select>
+              </div>
             </div>
             <div class="eq-field"><label>What are you interested in?</label>
               <div class="chip-row" data-chip="pathway">
@@ -1605,8 +1620,8 @@ const CONFIG = {
         // AC form 8 "F&L – Call requests (kiosks)", wired from its Full embed 6 Nov 2026.
         // Kiosk Source = SL / Fostering / F&L Not Sure "Call Requested" → AC automation A1's call branches.
         ready: true,
-        meta: { u: '8', f: '8', s: '', c: '0', m: '0', act: 'sub', v: '2', or: '41eba755-96c5-49cc-a003-253b0e783326' },
-        fields: { source: 'field[30]', date: 'field[31]', time: 'field[32]', optin: 'field[33]', phone: 'field[44]', postcode: 'field[45]', room: 'field[46]', calltime: 'field[47]' }
+        meta: { u: '8', f: '8', s: '', c: '0', m: '0', act: 'sub', v: '2', or: '4314dbbc-382f-4b4d-b862-4e614ab27fe8' },
+        fields: { source: 'field[30]', date: 'field[31]', time: 'field[32]', optin: 'field[33]', phone: 'field[44]', town: 'field[45]', county: 'field[48]', room: 'field[46]', calltime: 'field[47]' }
       }
     }
   }
@@ -1865,12 +1880,12 @@ function saveLog(l) { localStorage.setItem(LOG_KEY, JSON.stringify(l)); }
 function csvCell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
 function exportCsv() {
   const log = loadLog();
-  const headers = ['Taken (local)', 'Date', 'Time', 'Full name', 'Email', 'Phone', 'Postcode', 'Spare room', 'Best time to call', 'Interest', 'Source', 'Opted in', 'Sent to AC'];
+  const headers = ['Taken (local)', 'Date', 'Time', 'Full name', 'Email', 'Phone', 'Town', 'County', 'Postcode (older entries)', 'Spare room', 'Best time to call', 'Interest', 'Source', 'Opted in', 'Sent to AC'];
   const unsent = new Set(loadQueue().map(e => e.id));
   const rows = log.map(e => [
     e.queuedAt ? new Date(e.queuedAt).toLocaleString('en-GB') : '',
     e.date || '', e.time || '', e.fullname || '', e.email || '',
-    e.phone || '', e.postcode || '', e.room || '', e.calltime || '',
+    e.phone || '', e.town || '', e.county || '', e.postcode || '', e.room || '', e.calltime || '',
     e.interestType || '', e.source || '', e.optin || '', (unsent.has(e.id) ? 'No (still on device)' : 'Yes') || ''
   ].map(csvCell).join(','));
   const csv = '﻿' + [headers.map(csvCell).join(',')].concat(rows).join('\r\n');
@@ -1897,7 +1912,7 @@ function queueEntry(fields) {
     time: fields.time || now.toLocaleTimeString('en-GB'),
     optin: fields.optin ? 'Yes' : 'No',
     interestType: fields.interestType || '',   // the Kiosk Interest / tag value
-    phone: fields.phone || '', postcode: fields.postcode || '',
+    phone: fields.phone || '', town: fields.town || '', county: fields.county || '', postcode: fields.postcode || '',
     room: fields.room || '', calltime: fields.calltime || '',
     dest: fields.dest || 'kiosk',              // which AC form this routes to
     sendAfter: fields.sendAfter || 0,          // don't send before this time (ms); spaces out 'Both' guides
@@ -1936,7 +1951,8 @@ function acBody(entry) {
   if (f.optin)                          p.append(f.optin,    entry.optin);
   if (f.interest && entry.interestType) p.append(f.interest, entry.interestType);
   if (f.phone    && entry.phone)        p.append(f.phone,    entry.phone);
-  if (f.postcode && entry.postcode)     p.append(f.postcode, entry.postcode);
+  if (f.town     && entry.town)         p.append(f.town,     entry.town);
+  if (f.county   && entry.county)       p.append(f.county,   entry.county);
   if (f.room     && entry.room)         p.append(f.room,     entry.room);
   if (f.calltime && entry.calltime)     p.append(f.calltime, entry.calltime);
   return p;
@@ -2029,7 +2045,7 @@ async function codeOk(code, which) {
   const want = which === 'admin' ? CONFIG.event.adminCodeHash : CONFIG.event.staffCodeHash;
   try { return (await hashCode(code.trim())) === want; } catch (e) { return false; }
 }
-const PAGE_VERSION = 'Version 79 · 6 Nov 2026';   // bump with sw.js CACHE_VERSION so staff can check a device is up to date
+const PAGE_VERSION = 'Version 80 · 6 Nov 2026';   // bump with sw.js CACHE_VERSION so staff can check a device is up to date
 function openRecords() {
   hideStaffDetail();
   document.getElementById('rec-ver').textContent = PAGE_VERSION;
@@ -2076,7 +2092,7 @@ function renderRecords() {
   const all = loadLog().slice().reverse();
   const qEl = document.getElementById('rec-search');
   const q = (qEl ? qEl.value : '').trim().toLowerCase();
-  const log = q ? all.filter(e => [e.fullname, e.email, e.phone, e.postcode].some(v => String(v || '').toLowerCase().includes(q))) : all;
+  const log = q ? all.filter(e => [e.fullname, e.email, e.phone, e.town, e.county, e.postcode].some(v => String(v || '').toLowerCase().includes(q))) : all;
   const unsent = new Set(loadQueue().map(e => e.id));
   const signups = all.filter(e => e.dest === 'slsignup').length;
   const guides = all.filter(e => e.source === 'SL Guide' || e.source === 'Fostering Guide').length;
@@ -2086,7 +2102,7 @@ function renderRecords() {
   document.getElementById('rec-list').innerHTML = log.length ? log.map(e => {
     const st = entryStatus(e, unsent);
     const type = e.dest === 'slsignup' ? ({ 'SL Call Requested': 'Sign-up: Supported Lodgings', 'Fostering Call Requested': 'Sign-up: Fostering', 'F&L Not Sure Call Requested': 'Sign-up: not sure yet' }[e.source] || 'Host sign-up') : (e.source === 'SL Guide' ? 'SL guide request' : e.source === 'Fostering Guide' ? 'Fostering guide request' : (e.interestType || e.source || 'Entry'));
-    const extra = [e.phone, e.postcode, e.room && ('Spare room: ' + e.room), e.calltime && ('Call: ' + e.calltime)].filter(Boolean).map(esc).join(' · ');
+    const extra = [e.phone, [e.town, e.county].filter(Boolean).join(', '), e.postcode, e.room && ('Spare room: ' + e.room), e.calltime && ('Call: ' + e.calltime)].filter(Boolean).map(esc).join(' · ');
     return `<div class="rec-row">
       <div class="rr-name">${esc(e.fullname)}${extra ? `<div class="rr-extra">${extra}</div>` : ''}</div>
       <div class="rr-email">${esc(e.email)}</div>
@@ -2419,15 +2435,16 @@ function chipValue(name) {
 function pathwayChoice() { const s = document.querySelector('.chip-row[data-chip="pathway"] .chip.selected'); return s ? s.dataset.val : 'sl'; }
 function submitSignup() {
   const v = id => document.getElementById(id).value.trim();
-  const name = v('su-name'), email = v('su-email'), phone = v('su-phone'), postcode = v('su-postcode').toUpperCase();
+  const name = v('su-name'), email = v('su-email'), phone = v('su-phone'), town = v('su-town'), county = document.getElementById('su-county').value;
   let valid = true;
   if (!name) { fieldError('su-name', 'Please enter your name'); valid = false; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fieldError('su-email', 'Please enter a valid email'); valid = false; }
   if (phone.replace(/[^0-9]/g, '').length < 10) { fieldError('su-phone', 'Please enter a phone number'); valid = false; }
-  if (!/^[A-Z]{1,2}[0-9][A-Z0-9]?\s*[0-9][A-Z]{2}$/.test(postcode)) { fieldError('su-postcode', 'Please enter a full postcode'); valid = false; }
+  if (!town) { fieldError('su-town', 'Please enter your town'); valid = false; }
+  if (!county) { const c = document.getElementById('su-county'); c.style.borderColor = '#ED288D'; setTimeout(() => { c.style.borderColor = ''; }, 2500); valid = false; }
   if (!valid) { resetIdleTimer(); return; }
   const stored = queueEntry({
-    fullname: name, email, phone, postcode,
+    fullname: name, email, phone, town, county,
     room: chipValue('room'), calltime: chipValue('calltime'),
     source: CONFIG.event.signupSources[pathwayChoice()] || CONFIG.event.signupSources.sl,
     optin: document.getElementById('su-optin').classList.contains('checked'),
@@ -2446,7 +2463,7 @@ function resetSignup() {
   const form = document.getElementById('enq-signup-form');
   if (!form) return;
   form.style.display = '';
-  ['su-name', 'su-email', 'su-phone', 'su-postcode'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.style.borderColor = ''; });
+  ['su-name', 'su-email', 'su-phone', 'su-town', 'su-county'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.style.borderColor = ''; });
   form.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
   const sl = form.querySelector('.chip-row[data-chip="pathway"] .chip[data-val="sl"]'); if (sl) sl.classList.add('selected');   // default back to SL
   document.getElementById('su-optin').classList.add('checked');
