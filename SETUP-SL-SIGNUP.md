@@ -47,7 +47,7 @@ slsignup: {
   meta: { u: '…', f: '…', s: '', c: '0', m: '0', act: 'sub', v: '2', or: '…' },
   fields: {
     source: 'field[30]', date: 'field[31]', time: 'field[32]', optin: 'field[33]',
-    phone: 'field[..]', postcode: 'field[..]', room: 'field[..]', calltime: 'field[..]'
+    phone: 'field[44]', town: 'field[45]', county: 'field[48]', room: 'field[46]', calltime: 'field[47]'
   }
 }
 ```
@@ -70,7 +70,7 @@ Full details are in the ClickUp doc "ActiveCampaign: Set-up and Reference".
 ## Step 5. Test it, then bump the cache
 
 1. Submit a test sign-up on a phone.
-2. Check it arrives in ActiveCampaign with the phone, postcode, room and call-time values filled in.
+2. Check it arrives in ActiveCampaign with the phone, town, county, spare room and best time to call filled in.
 3. Tablets keep a cached copy of the page. To make them pick up the change, edit `sw.js` and add one to `CACHE_VERSION` (e.g. `sbs-kiosk-v59` → `sbs-kiosk-v60`).
 
 Anything held on a device sends automatically the next time it's online with the new version.
@@ -90,7 +90,7 @@ All of these go straight to a code screen; nothing staff-related shows without a
 - **Staff code:** view who has signed up and export the CSV. It can't delete anything.
 - **Admin code (Nic only):** the only code that can delete records.
 
-**The records screen** lists every guide request and host sign-up taken on that device, with name, email, phone, postcode, spare room and best time to call. Each entry has a status:
+**The records screen** lists every guide request and host sign-up taken on that device, with name, email, phone, town, county, spare room and best time to call. Each entry has a status:
 - **Sent (check it arrived in ActiveCampaign).** The page can only tell that the entry went out, not that ActiveCampaign accepted it, so spot-check after each event.
 - **Waiting to send.** The device is offline; it sends automatically when it reconnects.
 - **Held on this device.** The sign-up form isn't connected to ActiveCampaign yet.
