@@ -8,7 +8,7 @@ The page has two forms. They do different jobs and go to different places.
 | Form | What the visitor gets | Where it goes | Status |
 |---|---|---|---|
 | **Get the free guide** | The SL guide by email | Fostering & Lodgings form (f=3), Source `SL Guide`, which fires the existing guide automation | **Live** |
-| **Sign up to host** | A call from the SL team | Its own form (`slsignup` in CONFIG), Source `SL Kiosk Sign-up` | **Held on the device until connected** |
+| **Sign up to host** | A call from the SL team | Its own form (`slsignup` in CONFIG), Source `SL Call Requested / Fostering Call Requested / F&L Not Sure Call Requested` | **Held on the device until connected** |
 
 Until the sign-up form is connected, every sign-up is saved on the tablet or phone it was taken on. Nothing is lost, but nothing reaches ActiveCampaign either. The staff panel shows how many sign-ups are being held. **Export the CSV before you leave each event.**
 
@@ -19,7 +19,7 @@ Until the sign-up form is connected, every sign-up is saved on the tablet or pho
 Use whichever of these fits:
 
 - **Option A: reuse the website's sign-up form** (if it's an ActiveCampaign form). The kiosk sign-ups then land in the same place as website sign-ups, and the same automation picks them up.
-- **Option B: make a new form called "SL Kiosk Sign-up".** Choose this if you want kiosk sign-ups reported separately.
+- **Option B: make a new form called "SL Call Requested / Fostering Call Requested / F&L Not Sure Call Requested".** Choose this if you want kiosk sign-ups reported separately.
 
 The form needs these fields:
 
@@ -57,7 +57,7 @@ slsignup: {
 
 ## Step 4. Automation
 
-In ActiveCampaign, add an automation that starts when someone **submits** the form (or, on the shared form, when Source is `SL Kiosk Sign-up`). It should:
+In ActiveCampaign, add an automation that starts when someone **submits** the form (or, on the shared form, when Source is `SL Call Requested / Fostering Call Requested / F&L Not Sure Call Requested`). It should:
 
 - notify the SL team or create a task to call the person back
 - add a tag such as `SL – Kiosk sign-up` so you can report on it

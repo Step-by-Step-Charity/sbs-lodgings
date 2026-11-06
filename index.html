@@ -1395,6 +1395,13 @@
               <div class="eq-field"><label for="su-phone">Phone number</label><input type="tel" id="su-phone" placeholder="So we can call you" autocomplete="off"></div>
               <div class="eq-field"><label for="su-postcode">Postcode</label><input type="text" id="su-postcode" placeholder="e.g. GU11 1UD" autocomplete="off" autocorrect="off" spellcheck="false" style="text-transform:uppercase"></div>
             </div>
+            <div class="eq-field"><label>What are you interested in?</label>
+              <div class="chip-row" data-chip="pathway">
+                <button class="chip selected" data-val="sl" onclick="pickChip(this)">Supported Lodgings</button>
+                <button class="chip" data-val="fostering" onclick="pickChip(this)">Fostering</button>
+                <button class="chip" data-val="notsure" onclick="pickChip(this)">Not sure yet</button>
+              </div>
+            </div>
             <div class="eq-field"><label>Do you have a spare room?</label>
               <div class="chip-row" data-chip="room">
                 <button class="chip" onclick="pickChip(this)">Yes</button>
@@ -1548,7 +1555,9 @@ const CONFIG = {
     slEnquiryEnabled: true,
 
     // Full host sign-up. Lands in AC with this Source once its form is connected below.
-    signupSource: 'SL Kiosk Sign-up',
+    // Host sign-up: Kiosk Source value per "What are you interested in?". These match the
+    // call-request branches of ActiveCampaign's A1 F&L Routing automation (stage = Requested Call).
+    signupSources: { sl: 'SL Call Requested', fostering: 'Fostering Call Requested', notsure: 'F&L Not Sure Call Requested' },
 
     // Two codes, stored as SHA-256 hashes of 'sbs-sl-kiosk:' + code.
     //  - staff: view who's signed up + export the CSV. Nothing else.
@@ -2020,7 +2029,7 @@ async function codeOk(code, which) {
   const want = which === 'admin' ? CONFIG.event.adminCodeHash : CONFIG.event.staffCodeHash;
   try { return (await hashCode(code.trim())) === want; } catch (e) { return false; }
 }
-const PAGE_VERSION = 'Version 76 · 6 Nov 2026';   // bump with sw.js CACHE_VERSION so staff can check a device is up to date
+const PAGE_VERSION = 'Version 77 · 6 Nov 2026';   // bump with sw.js CACHE_VERSION so staff can check a device is up to date
 function openRecords() {
   hideStaffDetail();
   document.getElementById('rec-ver').textContent = PAGE_VERSION;
@@ -2076,7 +2085,7 @@ function renderRecords() {
     `<div><b>${signups}</b> host sign-up${signups === 1 ? '' : 's'}</div><div><b>${guides}</b> guide request${guides === 1 ? '' : 's'}</div><div class="${notSent ? 'warn' : ''}"><b>${notSent}</b> not yet in ActiveCampaign</div>`;
   document.getElementById('rec-list').innerHTML = log.length ? log.map(e => {
     const st = entryStatus(e, unsent);
-    const type = e.dest === 'slsignup' ? 'Host sign-up' : (e.source === 'SL Guide' ? 'SL guide request' : e.source === 'Fostering Guide' ? 'Fostering guide request' : (e.interestType || e.source || 'Entry'));
+    const type = e.dest === 'slsignup' ? ({ 'SL Call Requested': 'Sign-up: Supported Lodgings', 'Fostering Call Requested': 'Sign-up: Fostering', 'F&L Not Sure Call Requested': 'Sign-up: not sure yet' }[e.source] || 'Host sign-up') : (e.source === 'SL Guide' ? 'SL guide request' : e.source === 'Fostering Guide' ? 'Fostering guide request' : (e.interestType || e.source || 'Entry'));
     const extra = [e.phone, e.postcode, e.room && ('Spare room: ' + e.room), e.calltime && ('Call: ' + e.calltime)].filter(Boolean).map(esc).join(' · ');
     return `<div class="rec-row">
       <div class="rr-name">${esc(e.fullname)}${extra ? `<div class="rr-extra">${extra}</div>` : ''}</div>
@@ -2407,6 +2416,7 @@ function chipValue(name) {
   const s = document.querySelector('.chip-row[data-chip="' + name + '"] .chip.selected');
   return s ? s.textContent.trim() : '';
 }
+function pathwayChoice() { const s = document.querySelector('.chip-row[data-chip="pathway"] .chip.selected'); return s ? s.dataset.val : 'sl'; }
 function submitSignup() {
   const v = id => document.getElementById(id).value.trim();
   const name = v('su-name'), email = v('su-email'), phone = v('su-phone'), postcode = v('su-postcode').toUpperCase();
@@ -2419,7 +2429,7 @@ function submitSignup() {
   const stored = queueEntry({
     fullname: name, email, phone, postcode,
     room: chipValue('room'), calltime: chipValue('calltime'),
-    source: CONFIG.event.signupSource,
+    source: CONFIG.event.signupSources[pathwayChoice()] || CONFIG.event.signupSources.sl,
     optin: document.getElementById('su-optin').classList.contains('checked'),
     dest: 'slsignup', interestType: 'Supported Lodgings host sign-up'
   });
@@ -2438,6 +2448,7 @@ function resetSignup() {
   form.style.display = '';
   ['su-name', 'su-email', 'su-phone', 'su-postcode'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.style.borderColor = ''; });
   form.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  const sl = form.querySelector('.chip-row[data-chip="pathway"] .chip[data-val="sl"]'); if (sl) sl.classList.add('selected');   // default back to SL
   document.getElementById('su-optin').classList.add('checked');
   document.getElementById('enq-signup-confirm').classList.remove('show');
 }
